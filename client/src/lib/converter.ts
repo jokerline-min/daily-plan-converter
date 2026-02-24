@@ -118,12 +118,19 @@ function parseMarkdownTable(markdownText: string): { columns: string[]; dataRows
   let tableStarted = false;
   
   for (const line of lines) {
-    // 检测分隔行（包含 --- 或 ---- 的行）
-    if (line.includes('---') && line.includes('|')) {
+    // 检测分隔行（包含 --- 或 ---- 的行，支持 :---: 格式）
+    if (line.includes('|') && /^[|\s:-]+$/.test(line.trim()) && line.includes('-')) {
       tableStarted = true;
       continue;
     }
+    
+    // 如果还没开始或者不是表格行，跳过
     if (!tableStarted || !line.includes('|')) {
+      // 如果已经开始但遇到了非表格行，说明表格结束了
+      if (tableStarted && line.trim() !== '' && !line.includes('|')) {
+        // 只有在已经提取到数据的情况下才停止，防止中间的空行导致中断
+        if (dataRows.length > 0) break;
+      }
       continue;
     }
     
